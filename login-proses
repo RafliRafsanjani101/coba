@@ -1,0 +1,39 @@
+<?php
+// login_proses.php
+session_start();
+require_once 'koneksi.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
+
+    if (!empty($username) && !empty($password)) {
+        // Query mencari user
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
+        $stmt->execute(['username' => $username]);
+        $user = $stmt->fetch();
+
+        // Validasi password plain-text (sesuai dump data perpustakaan.sql kamu)
+        if ($user && $password === $user['password']) {
+            $_SESSION['id_user']  = $user['id_user'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['role']     = $user['role'];
+
+            // Redirect sesuai role
+            if ($user['role'] === 'admin') {
+                header("Location: admin/dashboard-admin.php");
+            } else if ($user['role'] === 'anggota') {
+                header("Location: anggota/dashboard-anggota.php");
+            }
+            exit();
+        } else {
+            // Login gagal
+            header("Location: login.php?status=failed");
+            exit();
+        }
+    }
+} else {
+    header("Location: login.php");
+    exit();
+}
+?>
